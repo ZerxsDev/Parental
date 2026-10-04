@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">Parental</string>
-    <string name="device_admin_label">Parental Control</string>
-    <string name="device_admin_description">Izinkan Parental mengunci layar perangkat anak dari jauh.</string>
-    <string name="default_html_password">1234</string>
-</resources>
