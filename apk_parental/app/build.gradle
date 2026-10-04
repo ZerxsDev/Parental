@@ -1,0 +1,42 @@
+plugins {
+    id 'com.android.application'
+    // Uncomment setelah menaruh google-services.json dari Firebase Console (Spark Plan)
+    // di app/google-services.json, lalu hapus komentar baris berikut:
+    // id 'com.google.gms.google-services'
+}
+
+android {
+    namespace 'com.company.parental'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.company.parental"
+        minSdk 23
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+
+    // ===== Firebase (Spark / Free Plan) - Realtime Database =====
+    implementation platform('com.google.firebase:firebase-bom:32.7.2')
+    implementation 'com.google.firebase:firebase-database'
+
+    // ===== HTTP fallback (jika memakai REST Rules tanpa SDK key) =====
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+}
