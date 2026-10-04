@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parental Control - Web Panel</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ================= LOGIN (PASSWORD HTML) ================= -->
+<div id="loginScreen" class="login-wrap">
+  <div class="login-card">
+    <div class="logo">🛡️</div>
+    <h1>Parental Control</h1>
+    <p class="muted">Web Panel — Firebase Realtime Database (Spark Plan)</p>
+    <label>Firebase Database URL</label>
+    <input type="text" id="dbUrlInput" placeholder="https://xxxx-default-rtdb.firebaseio.com">
+    <label>Password HTML</label>
+    <input type="password" id="pwInput" placeholder="Password panel orang tua">
+    <button id="btnLogin" class="btn-primary">MASUK KE PANEL</button>
+    <div id="loginMsg" class="msg"></div>
+  </div>
+</div>
+
+<!-- ================= PANEL UTAMA ================= -->
+<div id="panelScreen" class="hidden">
+  <header>
+    <div class="brand">🛡️ Parental <span>Web Panel v1.0</span></div>
+    <div class="head-right">
+      <span id="connState" class="pill pill-off">Menghubungkan…</span>
+      <button id="btnLogout" class="btn-ghost">Keluar</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- KOTAK PERANGKAT TERHUBUNG -->
+    <section class="card">
+      <h2>📱 Perangkat Terhubung</h2>
+      <div id="deviceBox" class="device-grid">
+        <div class="empty">Belum ada perangkat. Pasang APK <b>com.company.parental</b>
+          di HP anak, biarkan tersambung internet.</div>
+      </div>
+    </section>
+
+    <!-- MENU CONTROL -->
+    <section class="card">
+      <h2>🎛️ Menu Control</h2>
+      <div class="control-row">
+        <label>Perangkat target:</label>
+        <select id="deviceSelect"><option value="">— pilih perangkat —</option></select>
+        <button id="btnRefreshOne" class="btn-ghost">↻ Refresh Status</button>
+      </div>
+
+      <div class="grid2">
+        <!-- KUNCI LAYAR -->
+        <div class="subcard">
+          <h3>🔒 Kunci Layar Anak</h3>
+          <div class="switchline">
+            <span>Status: <b id="stLock">OFF</b></span>
+            <label class="toggle">
+              <input type="checkbox" id="tgLock">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <p class="muted">ON = layar langsung terkunci via Device Admin. OFF = buka kembali.</p>
+        </div>
+
+        <!-- BLOKIR APLIKASI -->
+        <div class="subcard">
+          <h3>🚫 Blokir Aplikasi</h3>
+          <div class="switchline">
+            <span>Status: <b id="stBlock">OFF</b></span>
+            <label class="toggle">
+              <input type="checkbox" id="tgBlock">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <p class="muted">Aplikasi terpilih tidak bisa dibuka anak bila ON.</p>
+        </div>
+      </div>
+
+      <!-- PILIHAN APLIKASI BLOKIR -->
+      <div class="subcard">
+        <h3>📦 Daftar Aplikasi Diblokir (package name)</h3>
+        <textarea id="pkgList" rows="4"
+          placeholder="com.android.chrome&#10;com.instagram.android&#10;(satu package per baris)"></textarea>
+        <div class="row-btns">
+          <button id="btnSavePkgs" class="btn-primary">💾 Kirim Daftar Blokir</button>
+        </div>
+        <p class="muted">Contoh package: com.facebook.katana, com.spotify.music,
+          com.zhiliaoapp.musically (TikTok), com.game.gameloft...</p>
+      </div>
+
+      <!-- PASSWORD HTML -->
+      <div class="subcard">
+        <h3>🌐 Password HTML (Panel Lokal Anak)</h3>
+        <div class="row-input">
+          <input type="text" id="newPw" placeholder="Password baru (min 4 karakter)">
+          <button id="btnSetPw" class="btn-primary">Ganti Password</button>
+        </div>
+        <p class="muted">Password ini dipakai membuka panel Parental di HP anak dan login web ini.</p>
+      </div>
+
+      <div id="cmdMsg" class="msg"></div>
+    </section>
+
+    <!-- LOG AKSI -->
+    <section class="card">
+      <h2>📜 Aktivitas Terakhir</h2>
+      <pre id="rawLog" class="log">(data realtime dari Firebase akan tampil di sini)</pre>
+    </section>
+  </main>
+</div>
+
+<script src="firebase-app.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

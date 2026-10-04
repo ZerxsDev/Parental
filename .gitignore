@@ -1,0 +1,31 @@
+# Gradle
+.gradle/
+build/
+local.properties
+
+# Android Studio / IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.cxx/
+.externalNativeBuild/
+
+# Compiled files
+*.class
+*.dex
+*.jar
+*.aar
+*.apk
+*.ap_
+*.aab
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
