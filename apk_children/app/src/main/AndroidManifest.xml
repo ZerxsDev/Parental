@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Komunikasi dgn server parental -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Overlay kunci layar di atas aplikasi lain (TIDAK diminta ke user,
+         tapi HARUS diizinkan manual lewat Settings > Display > Advanced >
+         Other permissions > Appear on top / Tampilkan di atas aplikasi lain) -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- Runtime permissions yg diminta saat buka aplikasi -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- Service latar belakang agar socket tetap hidup -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Device admin (kecuali launcher, sesuai alur). FORCE_LOCK_ALLOWED &
+         LIMIT_PASSWORD diaktifkan lewat @xml/device_admin -->
+    <uses-permission android:name="android.permission.DEVICE_POWER"
+        tools:ignore="ProtectedPermissions" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@drawable/ic_launcher_fallback"
+        android:label="children"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Children"
+        android:usesCleartextTraffic="true">
+        <!-- usesCleartextTraffic=true diperlukan jika server parental memakai http:// (bukan https).
+             Untuk production sebaiknya pakai https lalu hapus flag ini. -->
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".DashboardActivity" android:exported="false" />
+
+        <!-- Activity satu tugas (singleTask) agar selalu berada di paling depan
+             ketika dipanggil dari service (overlay tidak bisa ditumpuk oleh anak) -->
+        <activity
+            android:name=".LockActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true"
+            android:taskAffinity=""
+            android:configChanges="orientation|screenSize|keyboardHidden" />
+
+        <!-- Device admin receiver (KECUALI launcher) -->
+        <receiver
+            android:name=".AdminReceiver"
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Service penjaga koneksi socket + pemantau layar -->
+        <service
+            android:name=".ControlService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

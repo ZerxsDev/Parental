@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout 2: Dashboard anak (ditampilkan setelah sesi tersimpan/taut) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Dashboard Anak"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvDashStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Koneksi: ..."
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/tvLockState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Mode kunci layar orang tua: OFF" />
+
+    <TextView
+        android:id="@+id/tvBlockState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Blokir aplikasi: OFF (0 aplikasi)" />
+
+    <TextView
+        android:id="@+id/tvSessionId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Sesi: -"
+        android:textSize="12sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <Button
+        android:id="@+id/btnChangeServer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ubah Alamat Server Parental" />
+
+    <Button
+        android:id="@+id/btnUnpair"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Putuskan Tautan (Unpair)" />
+</LinearLayout>

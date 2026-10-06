@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<!-- parental (versi 1.0) — Web Parental Control utk aplikasi children -->
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>parental — 1.0</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>parental <span class="ver">v1.0</span></h1>
+  <div id="connBadge" class="badge off">server: menghubungkan…</div>
+</header>
+
+<!-- ================= LAYAR 1 : MASUKKAN KODE DARI APK ================= -->
+<section id="viewPair" class="card center">
+  <h2>Tautkan Perangkat Anak</h2>
+  <p>Buka aplikasi <b>children</b> di HP anak, lalu masukkan 6 digit angka
+     yang tampil di kotak aplikasi:</p>
+  <input id="inpCode" inputmode="numeric" maxlength="6" placeholder="contoh: 483920">
+  <button id="btnPair" class="primary">Tautkan</button>
+  <p id="pairMsg" class="msg"></p>
+</section>
+
+<!-- ================= LAYAR 2 : DASHBOARD ORANG TUA ================= -->
+<section id="viewDash" class="hidden">
+
+  <!-- KOTAK INFO PERANGKAT -->
+  <div class="card">
+    <h2>📱 Info Perangkat</h2>
+    <div class="grid2">
+      <div>Status koneksi anak:</div><div id="devOnline"><span class="dot off"></span>offline</div>
+      <div>Model:</div><div id="devModel">-</div>
+      <div>Android:</div><div id="devAndroid">-</div>
+      <div>Versi app:</div><div id="devVersion">-</div>
+      <div>ID Sesi:</div><div id="devSession">-</div>
+      <div>Ditautkan:</div><div id="devPairedAt">-</div>
+    </div>
+    <button id="btnUnpair" class="danger small">Putuskan Tautan</button>
+  </div>
+
+  <!-- KOTAK CONTROL -->
+  <div class="card">
+    <h2>🎛 Control</h2>
+
+    <!-- --- Kunci layar: tombol ON/OFF + indikator + teks password --- -->
+    <div class="ctrlbox">
+      <div class="row between">
+        <h3>Kunci Layar Anak
+          <span id="lockInd" class="pill off">OFF</span>
+        </h3>
+        <button id="btnLock" class="primary">Kunci</button>
+      </div>
+      <label>Password (dibuat orang tua):</label>
+      <div class="row">
+        <input id="inpPass" type="text" placeholder="misal: 1234abc" maxlength="32">
+        <button id="btnSetPass">Simpan Password</button>
+      </div>
+      <p class="hint">Teks password saat ini: <b id="passText">(belum diatur)</b></p>
+      <p class="hint">Overlay kunci di HP anak hanya bisa dibuka dengan password ini
+         atau tombol “Buka” dari web.</p>
+      <button id="btnForceLock" class="ghost small">Matikan Layar Sekarang (device admin)</button>
+    </div>
+
+    <!-- --- Blokir aplikasi: tombol ON/OFF + indikator + list --- -->
+    <div class="ctrlbox">
+      <div class="row between">
+        <h3>Blokir Aplikasi
+          <span id="blockInd" class="pill off">OFF</span>
+        </h3>
+        <button id="btnBlock" class="primary">Aktifkan</button>
+      </div>
+      <label>Tambah package / nama aplikasi:</label>
+      <div class="row">
+        <input id="inpPkg" placeholder="com.android.chrome">
+        <button id="btnAddPkg">Tambah</button>
+      </div>
+      <p class="hint">Daftar aplikasi yang diblokir:</p>
+      <ul id="listBlocked" class="blockedlist"></ul>
+      <p class="hint">Tip: nama package terlihat di Play Store (URL) atau
+         lewat <i>Settings &gt; Apps</i>. Contoh: com.instagram.android</p>
+    </div>
+
+    <div id="lastBlocked" class="alert hidden">⚠ Anak mencoba membuka aplikasi diblokir:
+      <b id="lastBlockedPkg"></b></div>
+  </div>
+</section>
+
+<footer>parental 1.0 — server node.js + socket.io — pasangan apk: com.company.children</footer>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

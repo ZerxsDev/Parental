@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout 3: Overlay kunci layar (LockActivity). Menutupi seluruh layar,
+     intercept Home/Recents/Back, hanya bisa dibuka dgn password orang tua
+     atau perintah unlock dari web parental -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/lockRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#102027">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Layar Dikunci Orang Tua"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvLockReason"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="Masukkan password dari orang tua untuk membuka."
+            android:textColor="#B0BEC5"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:hint="Password orang tua"
+            android:inputType="textPassword"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#78909C" />
+
+        <Button
+            android:id="@+id/btnUnlock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Buka" />
+
+        <TextView
+            android:id="@+id/tvLockMsg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:textColor="#FF8A80"
+            android:textSize="13sp" />
+    </LinearLayout>
+</FrameLayout>
