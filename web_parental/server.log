@@ -1,0 +1,6 @@
+======================================================
+ parental server jalan:
+   lokal : http://localhost:3000
+   LAN   : http://21.0.1.152:3000
+ Isi alamat LAN tsb di Config.SERVER_URL aplikasi children.
+======================================================
