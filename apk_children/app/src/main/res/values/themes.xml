@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Tema dasar Material; warna bisa diubah di colors.xml -->
-    <style name="Theme.Children" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#1B5E20</item>
-        <item name="colorPrimaryVariant">#2E7D32</item>
-        <item name="colorSecondary">#FF6F00</item>
-    </style>
-</resources>
