@@ -1,3 +1,0 @@
--dontwarn org.java.**
--dontwarn io.socket.**
--keep class io.socket.** { *; }
