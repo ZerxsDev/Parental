@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">children</string>
+    <string name="perm_title">Izin diperlukan</string>
+    <string name="perm_desc">Aplikasi parental control membutuhkan izin berikut agar berfungsi:</string>
+    <string name="btn_grant_overlay">Izinkan Tampilan Overlay</string>
+    <string name="btn_grant_usage">Izinkan Akses Penggunaan Aplikasi</string>
+    <string name="btn_grant_admin">Aktifkan Device Admin</string>
+    <string name="btn_next">Lanjut</string>
+    <string name="pairing_title">Tautkan ke Web Parental</string>
+    <string name="pairing_desc">Masukkan kode 6 digit ini di website parental (parental-control) untuk menautkan perangkat anak.</string>
+    <string name="status_connected">Terhubung ke server parental ✔</string>
+    <string name="status_disconnected">Belum terhubung ke server ✘</string>
+    <string name="dash_title">Dashboard Anak</string>
+    <string name="dash_paired">Perangkat tertaut. Orang tua dapat mengontrol dari web parental.</string>
+    <string name="overlay_locked">Layar Dikunci oleh Orang Tua</string>
+    <string name="overlay_blocked">Aplikasi Ini Diblokir oleh Orang Tua</string>
+    <string name="overlay_hint">Masukkan password dari orang tua untuk membuka:</string>
+    <string name="btn_unlock">Buka</string>
+    <string name="wrong_password">Password salah!</string>
+</resources>
