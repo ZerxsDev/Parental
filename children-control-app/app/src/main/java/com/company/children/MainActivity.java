@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -24,6 +25,7 @@ import androidx.appcompat.app.AppCompatActivity;
  *  2. Layar kode  : tampilkan 6 digit angka acak untuk ditautkan di web parental.
  *  3. Dashboard   : setelah server mengirim sesi ("paired"), tampilkan dashboard anak.
  * ControlService menangani overlay kunci/blokir secara terpisah.
+ * Catatan CodeAssist: tanpa lambda, semua konstanta visibilitas memakai View.VISIBLE / View.GONE.
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -32,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
     private LinearLayout layoutPerms, layoutPairing, layoutDashboard;
     private TextView statusOverlay, statusUsage, statusAdmin, tvPairCode, tvConnStatus,
-                     tvDeviceInfo, tvControlState;
+                     tvDeviceInfo, tvControlState, tvTitle, tvDesc;
     private Button btnNext;
     private SessionStore store;
     private BroadcastReceiver receiver;
@@ -54,6 +56,8 @@ public class MainActivity extends AppCompatActivity {
         tvConnStatus    = findViewById(R.id.tvConnStatus);
         tvDeviceInfo    = findViewById(R.id.tvDeviceInfo);
         tvControlState  = findViewById(R.id.tvControlState);
+        tvTitle         = findViewById(R.id.tvTitle);
+        tvDesc          = findViewById(R.id.tvDesc);
         btnNext         = findViewById(R.id.btnNext);
 
         Button btnOverlay = findViewById(R.id.btnOverlay);
@@ -61,46 +65,62 @@ public class MainActivity extends AppCompatActivity {
         Button btnAdmin   = findViewById(R.id.btnAdmin);
         Button btnUnpair  = findViewById(R.id.btnUnpair);
 
-        btnOverlay.setOnClickListener(v -> {
-            Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getPackageName()));
-            startActivity(i);
-        });
-
-        btnUsage.setOnClickListener(v -> {
-            try {
-                startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
-            } catch (Exception e) {
-                Toast.makeText(this, "Menu usage access tidak tersedia", Toast.LENGTH_SHORT).show();
+        btnOverlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + getPackageName()));
+                startActivity(i);
             }
         });
 
-        btnAdmin.setOnClickListener(v -> {
-            Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
-            intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN,
-                    AdminReceiver.component(this));
-            intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                    "Diperlukan untuk fitur kunci layar parental.");
-            startActivity(intent);
-        });
-
-        btnNext.setOnClickListener(v -> {
-            if (!hasAllPermissions()) {
-                Toast.makeText(this,
-                        "Semua izin (overlay, usage, device admin) harus diberikan dulu",
-                        Toast.LENGTH_LONG).show();
-                return;
+        btnUsage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this,
+                            "Menu usage access tidak tersedia", Toast.LENGTH_SHORT).show();
+                }
             }
-            showPairing();
-            startService(new Intent(this, ControlService.class));
         });
 
-        btnUnpair.setOnClickListener(v -> {
-            store.clear();
-            sendBroadcast(new Intent(LockOverlayActivity.ACTION_DISMISS)
-                    .setPackage(getPackageName()));
-            stopService(new Intent(this, ControlService.class));
-            showPermissions();
+        btnAdmin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+                intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN,
+                        AdminReceiver.component(MainActivity.this));
+                intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                        "Diperlukan untuk fitur kunci layar parental.");
+                startActivity(intent);
+            }
+        });
+
+        btnNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!hasAllPermissions()) {
+                    Toast.makeText(MainActivity.this,
+                            "Semua izin (overlay & device admin) harus diberikan dulu",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+                showPairing();
+                startService(new Intent(MainActivity.this, ControlService.class));
+            }
+        });
+
+        btnUnpair.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                store.clear();
+                sendBroadcast(new Intent(LockOverlayActivity.ACTION_DISMISS)
+                        .setPackage(getPackageName()));
+                stopService(new Intent(MainActivity.this, ControlService.class));
+                showPermissions();
+            }
         });
 
         receiver = new BroadcastReceiver() {
@@ -127,28 +147,30 @@ public class MainActivity extends AppCompatActivity {
     // ------------------------------------------------------------- screens
 
     private void showPermissions() {
-        layoutPerms.setVisibility(VISIBLE);
-        layoutPairing.setVisibility(GONE);
-        layoutDashboard.setVisibility(GONE);
-        findViewById(R.id.tvTitle).setVisibility(VISIBLE);
-        findViewById(R.id.tvDesc).setVisibility(VISIBLE);
+        layoutPerms.setVisibility(View.VISIBLE);
+        layoutPairing.setVisibility(View.GONE);
+        layoutDashboard.setVisibility(View.GONE);
+        tvTitle.setVisibility(View.VISIBLE);
+        tvDesc.setVisibility(View.VISIBLE);
+        tvTitle.setText(R.string.perm_title);
+        tvDesc.setText(R.string.perm_desc);
     }
 
     private void showPairing() {
-        layoutPerms.setVisibility(GONE);
-        layoutPairing.setVisibility(VISIBLE);
-        layoutDashboard.setVisibility(GONE);
-        ((TextView) findViewById(R.id.tvTitle)).setText(R.string.pairing_title);
-        ((TextView) findViewById(R.id.tvDesc)).setText(R.string.pairing_desc);
+        layoutPerms.setVisibility(View.GONE);
+        layoutPairing.setVisibility(View.VISIBLE);
+        layoutDashboard.setVisibility(View.GONE);
+        tvTitle.setText(R.string.pairing_title);
+        tvDesc.setText(R.string.pairing_desc);
         tvPairCode.setText(store.getOrCreatePairCode());
     }
 
     private void showDashboard() {
-        layoutPerms.setVisibility(GONE);
-        layoutPairing.setVisibility(GONE);
-        layoutDashboard.setVisibility(VISIBLE);
-        ((TextView) findViewById(R.id.tvTitle)).setText(R.string.dash_title);
-        ((TextView) findViewById(R.id.tvDesc)).setText("");
+        layoutPerms.setVisibility(View.GONE);
+        layoutPairing.setVisibility(View.GONE);
+        layoutDashboard.setVisibility(View.VISIBLE);
+        tvTitle.setText(R.string.dash_title);
+        tvDesc.setText("");
         refreshDashboard();
     }
 
@@ -225,8 +247,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        registerReceiver(receiver, new IntentFilter(ACTION_STATUS));
+        // dibungkus try/catch: beberapa ROM (Android 13+) menuntut flag ekspor
         try {
+            registerReceiver(receiver, new IntentFilter(ACTION_STATUS));
             registerReceiver(receiver, new IntentFilter(ACTION_STATE));
         } catch (Exception ignored) {}
 

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -23,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity;
  *   b) orang tua mematikan mode dari web (broadcast ACTION_DISMISS), atau
  *   c) blokir untuk aplikasi itu dilepas (overlay block menutup sendiri
  *      saat aplikasi foreground bukan lagi aplikasi terblokir).
+ * Catatan CodeAssist: tanpa lambda (pakai anonymous inner class).
  */
 public class LockOverlayActivity extends AppCompatActivity {
 
@@ -55,28 +57,33 @@ public class LockOverlayActivity extends AppCompatActivity {
 
         TextView tvTitle = findViewById(R.id.tvOverlayTitle);
         TextView tvApp = findViewById(R.id.tvOverlayApp);
-        EditText etPassword = findViewById(R.id.etPassword);
+        final EditText etPassword = findViewById(R.id.etPassword);
         Button btnUnlock = findViewById(R.id.btnUnlock);
-        TextView tvWrong = findViewById(R.id.tvWrong);
+        final TextView tvWrong = findViewById(R.id.tvWrong);
 
         if (mode == MODE_BLOCK) {
             tvTitle.setText(R.string.overlay_blocked);
             tvApp.setText("Aplikasi: " + blockedPkg);
         } else {
             tvTitle.setText(R.string.overlay_locked);
+            tvApp.setText("");
             // Device admin aktif -> kunci layar fisik juga (overlay tetap tampil saat nyala)
             AdminReceiver.forceLock(this);
         }
 
-        btnUnlock.setOnClickListener(v -> {
-            String input = etPassword.getText().toString();
-            String saved = store.getPassword();
-            if (!saved.isEmpty() && saved.equals(input)) {
-                finishAndRemoveTaskSafely();
-            } else {
-                tvWrong.setText(R.string.wrong_password);
-                etPassword.setText("");
-                Toast.makeText(this, R.string.wrong_password, Toast.LENGTH_SHORT).show();
+        btnUnlock.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String input = etPassword.getText().toString();
+                String saved = store.getPassword();
+                if (!saved.isEmpty() && saved.equals(input)) {
+                    finishAndRemoveTaskSafely();
+                } else {
+                    tvWrong.setText(R.string.wrong_password);
+                    etPassword.setText("");
+                    Toast.makeText(LockOverlayActivity.this,
+                            R.string.wrong_password, Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -87,7 +94,13 @@ public class LockOverlayActivity extends AppCompatActivity {
                 finish();
             }
         };
-        registerReceiver(dismissReceiver, new IntentFilter(ACTION_DISMISS));
+        // dibungkus try/catch untuk kompatibilitas ROM yang menuntut flag ekspor
+        try {
+            // dibungkus try/catch untuk kompatibilitas ROM yang menuntut flag ekspor
+        try {
+            registerReceiver(dismissReceiver, new IntentFilter(ACTION_DISMISS));
+        } catch (Exception ignored) {}
+        } catch (Exception ignored) {}
     }
 
     /** Blokir tombol back & home semaksimal mungkin (home tidak bisa diblokir API <28,

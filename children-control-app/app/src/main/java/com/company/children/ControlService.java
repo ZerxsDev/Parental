@@ -14,11 +14,11 @@ import android.os.IBinder;
 import android.os.Looper;
 
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +31,8 @@ import io.socket.client.Socket;
  *  1. Kirim "pair" (kode 6 digit + info perangkat) -> server balas "paired" (sesi disimpan).
  *  2. Terima "control_update" dari web orang tua -> simpan state & tampilkan overlay.
  *  3. Monitor aplikasi foreground -> bila diblokir, tampilkan overlay blokir.
+ * Catatan CodeAssist: tanpa lambda (dipakai anonymous inner class), tanpa
+ * androidx.core (Notification dibuat manual, API 23+ aman).
  */
 public class ControlService extends Service {
 
@@ -41,6 +43,9 @@ public class ControlService extends Service {
     private SessionStore store;
     private Handler handler;
     private ForegroundAppMonitor monitor;
+
+    /** Dipanggil LockOverlayActivity agar monitor berhenti sementara. */
+    public static volatile boolean PAUSED = false;
 
     @Override
     public void onCreate() {
@@ -66,55 +71,103 @@ public class ControlService extends Service {
 
     private void connect() {
         try {
+            // CATATAN: opsi "forceTLS" TIDAK ADA di socket.io-client Java 1.x
+            // (itulah penyebab error "forceTLS cannot be resolved").
+            // Untuk server http:// cukup set secure = false.
             IO.Options opts = new IO.Options();
             opts.reconnection = true;
-            opts.forceTLS = false;
-            socket = IO.socket(Config.SERVER_URL, opts);
+            opts.secure = false;
+            socket = IO.socket(URI.create(Config.SERVER_URL), opts);
 
-            socket.on(Socket.EVENT_CONNECT, args -> {
-                sendPairOrHello();
-                updateStatus("Menghubungkan...");
+            socket.on(Socket.EVENT_CONNECT, new io.socket.emitter.Emitter.Listener() {
+                @Override
+                public void call(Object... args) {
+                    sendPairOrHello();
+                    updateStatus("Terhubung ke server parental");
+                }
             });
 
-            socket.on("paired", args -> {
-                try {
-                    JSONObject data = (JSONObject) args[0];
-                    store.saveSession(
-                            data.getString("sessionId"),
-                            data.optString("password", ""),
-                            data.optBoolean("lockEnabled", false),
-                            data.optBoolean("blockEnabled", false),
-                            csvFromJson(data.optJSONArray("blockedPackages")));
+            socket.on("paired", new io.socket.emitter.Emitter.Listener() {
+                @Override
+                public void call(Object... args) {
+                    try {
+                        JSONObject data = (JSONObject) args[0];
+                        store.saveSession(
+                                data.getString("sessionId"),
+                                data.optString("password", ""),
+                                data.optBoolean("lockEnabled", false),
+                                data.optBoolean("blockEnabled", false),
+                                csvFromJson(data.optJSONArray("blockedPackages")));
+                        broadcastState();
+                        reportStateToServer();
+                        requestApply();
+                    } catch (Exception ignored) {}
+                }
+            });
+
+            socket.on("control_update", new io.socket.emitter.Emitter.Listener() {
+                @Override
+                public void call(Object... args) {
+                    try {
+                        JSONObject data = (JSONObject) args[0];
+                        if (data.has("password"))        store.setPassword(data.getString("password"));
+                        if (data.has("lockEnabled"))     store.setLockEnabled(data.getBoolean("lockEnabled"));
+                        if (data.has("blockEnabled"))    store.setBlockEnabled(data.getBoolean("blockEnabled"));
+                        if (data.has("blockedPackages"))
+                            store.setBlockedPackages(csvFromJson(data.getJSONArray("blockedPackages")));
+                        broadcastState();
+                        reportStateToServer();
+                        requestApply();
+                    } catch (Exception ignored) {}
+                }
+            });
+
+            socket.on("unlinked", new io.socket.emitter.Emitter.Listener() {
+                @Override
+                public void call(Object... args) {
+                    store.clear();
                     broadcastState();
-                    applyControlState();
-                } catch (Exception ignored) {}
+                    stopSelf();
+                }
             });
 
-            socket.on("control_update", args -> {
-                try {
-                    JSONObject data = (JSONObject) args[0];
-                    if (data.has("password"))   store.setPassword(data.getString("password"));
-                    if (data.has("lockEnabled")) store.setLockEnabled(data.getBoolean("lockEnabled"));
-                    if (data.has("blockEnabled")) store.setBlockEnabled(data.getBoolean("blockEnabled"));
-                    if (data.has("blockedPackages"))
-                        store.setBlockedPackages(csvFromJson(data.getJSONArray("blockedPackages")));
-                    broadcastState();
-                    applyControlState();
-                } catch (Exception ignored) {}
+            socket.on(Socket.EVENT_DISCONNECT, new io.socket.emitter.Emitter.Listener() {
+                @Override
+                public void call(Object... args) {
+                    updateStatus("Terputus, mencoba reconnect...");
+                }
             });
-
-            socket.on("unlinked", args -> {
-                store.clear();
-                stopSelf();
-            });
-
-            socket.on(Socket.EVENT_DISCONNECT, args ->
-                    updateStatus("Terputus, mencoba reconnect..."));
 
             socket.connect();
         } catch (Exception e) {
             updateStatus("Gagal koneksi: " + e.getMessage());
         }
+    }
+
+    /** Laporkan state terkini ke server supaya panel web orang tua tetap sinkron. */
+    private void reportStateToServer() {
+        if (socket == null || !store.isPaired()) return;
+        try {
+            JSONObject obj = new JSONObject();
+            obj.put("sessionId", store.getSessionId());
+            obj.put("password", store.getPassword());
+            obj.put("lockEnabled", store.isLockEnabled());
+            obj.put("blockEnabled", store.isBlockEnabled());
+            JSONArray pkgs = new JSONArray();
+            for (String p : blockedList(this)) pkgs.put(p);
+            obj.put("blockedPackages", pkgs);
+            socket.emit("state", obj);
+        } catch (Exception ignored) {}
+    }
+
+    /** Terapkan state kontrol di MAIN thread (startActivity dari thread socket tidak aman). */
+    private void requestApply() {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                applyControlState();
+            }
+        });
     }
 
     /** Kirim pair jika belum tertaut, kalau sudah kirim hello (rebind sesi). */
@@ -159,18 +212,23 @@ public class ControlService extends Service {
 
     // ------------------------------------------------------------------ control
 
-    /** Tampilkan / tutup overlay sesuai state kontrol terbaru. */
+    /** Tampilkan / tutup overlay sesuai state kontrol terbaru (dijalankan di main thread). */
     private void applyControlState() {
         if (store.isLockEnabled()) {
+            // sudah tampil? jangan start ulang terus-menerus
             Intent i = new Intent(this, LockOverlayActivity.class);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             i.putExtra(LockOverlayActivity.EXTRA_MODE, LockOverlayActivity.MODE_LOCK);
             startActivity(i);
         } else {
             // kunci mati -> tutup overlay bila masih tampil
-            sendBroadcast(new Intent(LockOverlayActivity.ACTION_DISMISS)
-                    .setPackage(getPackageName()));
+            sendDismiss();
         }
+    }
+
+    private void sendDismiss() {
+        sendBroadcast(new Intent(LockOverlayActivity.ACTION_DISMISS)
+                .setPackage(getPackageName()));
     }
 
     public static List<String> blockedList(Context ctx) {
@@ -214,28 +272,17 @@ public class ControlService extends Service {
         }
     }
 
-    @SuppressWarnings("WrongConstant")
     private String currentForegroundPackage() {
-        try {
-            ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-            List<ActivityManager.RunningAppProcessInfo> list = am.getRunningAppProcesses();
-            if (list != null) {
-                for (ActivityManager.RunningAppProcessInfo p : list) {
-                    if (p.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-                        return p.processName;
-                    }
-                }
-            }
-        } catch (Exception ignored) {}
-        // fallback: UsageStats (API 23+, butuh izin PACKAGE_USAGE_STATS)
+        // Cara utama: UsageStatsManager (API 23+, butuh izin PACKAGE_USAGE_STATS /
+        // "Akses Penggunaan Aplikasi" yang diberikan user dari Settings).
         try {
             android.app.usage.UsageStatsManager usm =
                     (android.app.usage.UsageStatsManager)
                             getSystemService(Context.USAGE_STATS_SERVICE);
             long now = System.currentTimeMillis();
-            android.app.usage.UsageEvents events =
-                    usm.queryEvents(now - 5000, now);
-            android.app.usage.UsageEvents.Event ev = new android.app.usage.UsageEvents.Event();
+            android.app.usage.UsageEvents events = usm.queryEvents(now - 5000, now);
+            android.app.usage.UsageEvents.Event ev =
+                    new android.app.usage.UsageEvents.Event();
             String pkg = null;
             while (events.hasNextEvent()) {
                 events.getNextEvent(ev);
@@ -243,14 +290,24 @@ public class ControlService extends Service {
                     pkg = ev.getPackageName();
                 }
             }
-            return pkg;
-        } catch (Exception e) {
-            return null;
-        }
+            if (pkg != null) return pkg;
+        } catch (Exception ignored) {}
+        // Fallback lama: getRunningAppProcesses (hanya mengembalikan data lengkap
+        // bila diizinkan OEM; umumnya hanya proses sendiri di Android baru).
+        try {
+            ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+            List<ActivityManager.RunningAppProcessInfo> list = am.getRunningAppProcesses();
+            if (list != null) {
+                for (ActivityManager.RunningAppProcessInfo p : list) {
+                    if (p.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+                            && !p.processName.equals(getPackageName())) {
+                        return p.processName;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
-
-    /** Dipanggil LockOverlayActivity agar monitor berhenti sementara. */
-    public static volatile boolean PAUSED = false;
 
     // ------------------------------------------------------------------ notif
 
@@ -263,15 +320,26 @@ public class ControlService extends Service {
         }
         Intent i = new Intent(this, MainActivity.class);
         PendingIntent pi = PendingIntent.getActivity(this, 0, i,
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                        ? PendingIntent.FLAG_IMMUTABLE : 0);
-        Notification n = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("children")
-                .setContentText("Parental control aktif")
-                .setSmallIcon(android.R.drawable.ic_lock_idle_low_battery)
-                .setContentIntent(pi)
-                .setOngoing(true)
-                .build();
+                PendingIntent.FLAG_IMMUTABLE); // FLAG_IMMUTABLE aman mulai API 23
+        // Notification dibuat manual (TANPA androidx.core / NotificationCompat)
+        Notification n;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            n = new Notification.Builder(this, CHANNEL_ID)
+                    .setContentTitle("children")
+                    .setContentText("Parental control aktif")
+                    .setSmallIcon(android.R.drawable.ic_lock_idle_low_battery)
+                    .setContentIntent(pi)
+                    .setOngoing(true)
+                    .build();
+        } else {
+            n = new Notification.Builder(this)
+                    .setContentTitle("children")
+                    .setContentText("Parental control aktif")
+                    .setSmallIcon(android.R.drawable.ic_lock_idle_low_battery)
+                    .setContentIntent(pi)
+                    .setOngoing(true)
+                    .build();
+        }
         startForeground(NOTIF_ID, n);
     }
 
@@ -280,5 +348,6 @@ public class ControlService extends Service {
         super.onDestroy();
         if (handler != null) handler.removeCallbacksAndMessages(null);
         if (socket != null) socket.disconnect();
+        PAUSED = false;
     }
 }
