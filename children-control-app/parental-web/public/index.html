@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>parental - Parental Control</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    body { background: #f0f2f5; color: #222; min-height: 100vh; }
+    header { background: #2e7d32; color: #fff; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+    header h1 { font-size: 20px; }
+    header .conn { font-size: 13px; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+    .dot.on { background: #4caf50; } .dot.off { background: #f44336; }
+    main { max-width: 980px; margin: 24px auto; padding: 0 16px; }
+    .card { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.12); padding: 20px; margin-bottom: 20px; }
+    .card h2 { font-size: 16px; margin-bottom: 12px; color: #2e7d32; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+    input[type=text], input[type=password] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+    button { cursor: pointer; border: none; border-radius: 6px; padding: 10px 16px; font-size: 14px; background: #2e7d32; color: #fff; }
+    button.secondary { background: #607d8b; }
+    button.danger { background: #c62828; }
+    button:disabled { background: #bbb; cursor: not-allowed; }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .hidden { display: none !important; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    td { padding: 6px 4px; border-bottom: 1px solid #f0f0f0; }
+    td:first-child { color: #666; width: 40%; }
+    .switch-btn { min-width: 110px; }
+    .switch-btn.active { background: #c62828; }
+    ul#blockedList { list-style: none; margin-top: 10px; }
+    ul#blockedList li { display: flex; justify-content: space-between; align-items: center; background: #fafafa; border: 1px solid #eee; border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; font-size: 14px; }
+    ul#blockedList li button { padding: 4px 10px; font-size: 12px; }
+    .muted { color: #777; font-size: 13px; }
+    #loginError { color: #c62828; margin-top: 8px; font-size: 14px; }
+    .pw-text { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🛡️ parental <span class="muted" style="color:#c8e6c9">v1.0</span></h1>
+    <div class="conn"><span id="serverDot" class="dot off"></span><span id="serverStatus">Server offline</span></div>
+  </header>
+
+  <main>
+    <!-- ================= LOGIN KODE ================= -->
+    <section id="loginSection" class="card">
+      <h2>Masuk Parental Control</h2>
+      <p class="muted" style="margin-bottom:12px">
+        Buka aplikasi <b>children</b> di hp anak setelah semua izin diberikan,
+        lalu masukkan kode 6 digit yang tampil di sana.
+      </p>
+      <div class="row">
+        <input id="codeInput" type="text" maxlength="6" placeholder="Contoh: 483920" style="max-width:200px" />
+        <button id="btnLogin">Tautkan Perangkat</button>
+      </div>
+      <div id="loginError"></div>
+    </section>
+
+    <!-- ================= PANEL UTAMA (setelah tertaut) ================= -->
+    <section id="panel" class="hidden">
+      <div class="grid">
+
+        <!-- Kotak Info Perangkat -->
+        <div class="card">
+          <h2>📱 Info Perangkat Anak</h2>
+          <table>
+            <tr><td>Status</td><td><span id="devDot" class="dot off"></span><span id="devOnline">offline</span></td></tr>
+            <tr><td>Nama perangkat</td><td id="devName">-</td></tr>
+            <tr><td>Versi Android</td><td id="devAndroid">-</td></tr>
+            <tr><td>Package aplikasi</td><td id="devPkg">-</td></tr>
+            <tr><td>Kode pairing</td><td id="devCode">-</td></tr>
+            <tr><td>ID sesi</td><td id="devSession">-</td></tr>
+          </table>
+          <div style="margin-top:14px">
+            <button id="btnUnpair" class="danger">Lepas Perangkat (Unpair)</button>
+          </div>
+        </div>
+
+        <!-- Kotak Control -->
+        <div class="card">
+          <h2>🎛️ Control</h2>
+
+          <!-- Kunci layar -->
+          <div style="border:1px solid #eee;border-radius:8px;padding:12px;margin-bottom:12px">
+            <div class="row" style="justify-content:space-between">
+              <b>🔒 Kunci Layar Anak</b>
+              <span><span id="lockDot" class="dot off"></span><span id="lockText">OFF</span></span>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <button id="btnLock" class="switch-btn secondary">Aktifkan</button>
+              <span class="muted">Password saat ini:</span>
+              <span id="pwShown" class="pw-text">(belum diatur)</span>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <input id="pwInput" type="text" placeholder="Password baru utk buka overlay" style="max-width:260px"/>
+              <button id="btnSetPw">Simpan Password</button>
+            </div>
+          </div>
+
+          <!-- Monitor realtime (last seen) -->
+          <div style="border:1px solid #eee;border-radius:8px;padding:12px;margin-top:12px">
+            <div class="row" style="justify-content:space-between">
+              <b>📡 Monitor Realtime</b>
+              <span><span id="liveDot" class="dot off"></span><span id="liveText">belum ada data</span></span>
+            </div>
+            <div class="muted" style="margin-top:6px">Terakhir terlihat: <b id="lastSeen">-</b></div>
+          </div>
+
+          <!-- Blokir aplikasi -->
+          <div style="border:1px solid #eee;border-radius:8px;padding:12px">
+            <div class="row" style="justify-content:space-between">
+              <b>🚫 Blokir Aplikasi</b>
+              <span><span id="blockDot" class="dot off"></span><span id="blockText">OFF</span></span>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <button id="btnBlock" class="switch-btn secondary">Aktifkan</button>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <input id="pkgInput" type="text" placeholder="package / nama aplikasi, mis. com.android.chrome" />
+              <button id="btnAddPkg">+ Blokir</button>
+            </div>
+            <ul id="blockedList"></ul>
+            <div id="emptyBlock" class="muted">Belum ada aplikasi diblokir.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let currentDevice = null; // state device yg sedang ditautkan ke browser ini
+
+    const $ = (id) => document.getElementById(id);
+
+    // ---------- koneksi server indicator ----------
+    socket.on('connect', () => {
+      $('serverDot').className = 'dot on';
+      $('serverStatus').textContent = 'Server online';
+    });
+    socket.on('disconnect', () => {
+      $('serverDot').className = 'dot off';
+      $('serverStatus').textContent = 'Server offline';
+    });
+
+    // ---------- login dengan kode 6 digit ----------
+    $('btnLogin').onclick = () => {
+      const code = $('codeInput').value.trim();
+      if (!/^\d{6}$/.test(code)) {
+        $('loginError').textContent = 'Kode harus 6 digit angka.';
+        return;
+      }
+      $('loginError').textContent = 'Menghubungkan...';
+      socket.emit('parent_login', { code });
+    };
+    $('codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnLogin').click(); });
+
+    socket.on('login_error', (msg) => { $('loginError').textContent = msg.message || 'Gagal'; });
+
+    socket.on('login_ok', ({ device }) => {
+      currentDevice = device;
+      $('loginError').textContent = '';
+      $('loginSection').classList.add('hidden');
+      $('panel').classList.remove('hidden');
+      render(device);
+    });
+
+    socket.on('unpaired', (msg) => {
+      alert(msg.message || 'Sesi parental berakhir.');
+      location.reload();
+    });
+
+    // ---------- update realtime dari apk ----------
+    socket.on('child_state', (device) => {
+      if (!currentDevice || device.code !== currentDevice.code) return;
+      currentDevice = device;
+      render(device);
+    });
+
+    function render(d) {
+      // info perangkat
+      $('devOnline').textContent = d.online ? 'online' : 'offline';
+      $('devDot').className = 'dot ' + (d.online ? 'on' : 'off');
+      $('devName').textContent = d.info.deviceName;
+      $('devAndroid').textContent = d.info.androidVersion;
+      $('devPkg').textContent = d.info.appPackage;
+      $('devCode').textContent = d.code;
+      $('devSession').textContent = d.sessionId;
+      updateLastSeen(d);
+
+      // kunci layar: indikator ON/OFF + teks password
+      const lockOn = !!d.state.lockEnabled;
+      $('lockDot').className = 'dot ' + (lockOn ? 'on' : 'off');
+      $('lockText').textContent = lockOn ? 'ON' : 'OFF';
+      $('btnLock').textContent = lockOn ? 'Matikan' : 'Aktifkan';
+      $('btnLock').className = 'switch-btn ' + (lockOn ? 'active' : 'secondary');
+      $('pwShown').textContent = d.state.password ? d.state.password : '(belum diatur)';
+
+      // blokir aplikasi: indikator ON/OFF + list
+      const blockOn = !!d.state.blockEnabled;
+      $('blockDot').className = 'dot ' + (blockOn ? 'on' : 'off');
+      $('blockText').textContent = blockOn ? 'ON' : 'OFF';
+      $('btnBlock').textContent = blockOn ? 'Matikan' : 'Aktifkan';
+      $('btnBlock').className = 'switch-btn ' + (blockOn ? 'active' : 'secondary');
+
+      const ul = $('blockedList');
+      ul.innerHTML = '';
+      (d.state.blockedPackages || []).forEach(pkg => {
+        const li = document.createElement('li');
+        const span = document.createElement('span');
+        span.textContent = pkg;
+        const btn = document.createElement('button');
+        btn.textContent = 'Hapus';
+        btn.className = 'danger';
+        btn.onclick = () => socket.emit('remove_blocked', { pkg });
+        li.appendChild(span); li.appendChild(btn);
+        ul.appendChild(li);
+      });
+      $('emptyBlock').style.display = (d.state.blockedPackages || []).length ? 'none' : 'block';
+    }
+
+    // ---------- monitor realtime (event "state" dari apk tiap ~5 detik) ----------
+    function updateLastSeen(d) {
+      const el = $('lastSeen');
+      if (!el) return;
+      if (!d.lastSeen) { el.textContent = '-'; return; }
+      el.textContent = new Date(d.lastSeen).toLocaleTimeString();
+      tickLive();
+    }
+    function tickLive() {
+      const d = currentDevice;
+      const dot = $('liveDot'), txt = $('liveText');
+      if (!d || !dot || !txt) return;
+      if (d.lastSeen && (Date.now() - d.lastSeen) < 12000 && d.online) {
+        dot.className = 'dot on'; txt.textContent = 'LIVE (apk kirim state tiap 5 detik)';
+      } else {
+        dot.className = 'dot off'; txt.textContent = 'tidak ada data baru';
+      }
+    }
+    setInterval(tickLive, 1000);
+
+    // ---------- aksi control ----------
+    $('btnSetPw').onclick = () => {
+      const pw = $('pwInput').value;
+      if (!pw) { alert('Isi password dulu.'); return; }
+      socket.emit('set_password', { password: pw });
+      $('pwInput').value = '';
+    };
+
+    $('btnLock').onclick = () => {
+      if (!currentDevice) return;
+      const enable = !currentDevice.state.lockEnabled;
+      if (enable && !currentDevice.state.password) {
+        alert('Atur password dulu sebelum mengaktifkan kunci layar!');
+        return;
+      }
+      socket.emit('set_lock', { enabled: enable });
+    };
+
+    $('btnBlock').onclick = () => {
+      if (!currentDevice) return;
+      socket.emit('set_block', { enabled: !currentDevice.state.blockEnabled });
+    };
+
+    $('btnAddPkg').onclick = () => {
+      const pkg = $('pkgInput').value.trim();
+      if (!pkg) { alert('Masukkan nama package aplikasi.'); return; }
+      socket.emit('add_blocked', { pkg });
+      $('pkgInput').value = '';
+    };
+    $('pkgInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnAddPkg').click(); });
+
+    $('btnUnpair').onclick = () => {
+      if (confirm('Lepas perangkat dari parental control?')) {
+        socket.emit('unpair');
+      }
+    };
+  </script>
+</body>
+</html>

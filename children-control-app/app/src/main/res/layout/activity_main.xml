@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/perm_title"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp" />
+
+        <TextView
+            android:id="@+id/tvDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/perm_desc"
+            android:textSize="15sp"
+            android:gravity="center"
+            android:layout_marginTop="12dp" />
+
+        <!-- ===== LAYAR 1: PERMISSIONS ===== -->
+        <LinearLayout
+            android:id="@+id/layoutPerms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="24dp">
+
+            <Button
+                android:id="@+id/btnOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_grant_overlay" />
+
+            <TextView
+                android:id="@+id/statusOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Overlay: belum diizinkan"
+                android:gravity="center"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnUsage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_grant_usage" />
+
+            <TextView
+                android:id="@+id/statusUsage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Usage stats: belum diizinkan"
+                android:gravity="center"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnAdmin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_grant_admin" />
+
+            <TextView
+                android:id="@+id/statusAdmin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Device admin: belum aktif"
+                android:gravity="center"
+                android:layout_marginBottom="16dp" />
+
+            <Button
+                android:id="@+id/btnNext"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_next" />
+        </LinearLayout>
+
+        <!-- ===== LAYAR 2: PAIRING CODE ===== -->
+        <LinearLayout
+            android:id="@+id/layoutPairing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/pairing_desc"
+                android:gravity="center"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/tvPairCode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="000000"
+                android:textSize="48sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.3"
+                android:background="#EEEEEE"
+                android:padding="16dp" />
+
+            <TextView
+                android:id="@+id/tvConnStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/status_disconnected"
+                android:gravity="center"
+                android:layout_marginTop="16dp" />
+        </LinearLayout>
+
+        <!-- ===== LAYAR 3: DASHBOARD ANAK ===== -->
+        <LinearLayout
+            android:id="@+id/layoutDashboard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/dash_paired"
+                android:gravity="center"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/tvDeviceInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Info perangkat"
+                android:gravity="center" />
+
+            <TextView
+                android:id="@+id/tvControlState"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Status kontrol: normal"
+                android:gravity="center"
+                android:layout_marginTop="8dp" />
+
+            <Button
+                android:id="@+id/btnUnpair"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="Putuskan Tautan (Unpair)" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
